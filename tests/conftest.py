@@ -67,3 +67,14 @@ def policy() -> PermissionPolicy:
 @pytest.fixture
 def audit(tmp_path) -> AuditLog:
     return AuditLog(tmp_path / "audit.jsonl")
+
+
+# The tests/mcp_gateway suite requires the optional ``aegize[mcp]`` extra (Python
+# 3.10+). When the ``mcp`` SDK is not importable — e.g. the base package on
+# Python 3.9 — the directory is excluded from collection so the core suite
+# stays green without it.
+import importlib.util  # noqa: E402
+
+collect_ignore = []
+if importlib.util.find_spec("mcp") is None:
+    collect_ignore.append("mcp_gateway")

@@ -104,6 +104,13 @@ and confidence in deployment are the rest.
 pip install aegize
 ```
 
+With the MCP policy gateway (Python 3.10+; see
+[MCP gateway](#mcp-gateway-aegize-mcp)):
+
+```bash
+pip install "aegize[mcp]"
+```
+
 Or from source (for development):
 
 ```bash
@@ -320,6 +327,66 @@ gate. Each case takes:
 
 This is the first step of the policy-as-code lifecycle explored in
 [RFC 0008](./rfcs/0008-policy-as-code-lifecycle.md).
+
+## MCP gateway (`aegize-mcp`)
+
+Put Aegize in front of **any local stdio MCP server** — no changes to the
+server, no changes to the host. The gateway launches the real server as a
+subprocess, mirrors its tools, and routes every tool call through the Aegize
+runtime; only allowed calls are forwarded ([RFC 0009](./rfcs/0009-mcp-policy-gateway.md)).
+
+```
+MCP Host  ──stdio──►  Aegize MCP Gateway  ──stdio──►  Upstream MCP server
+(Claude Code, …)      (identity · policy ·            (any local stdio server)
+                       approval · audit)
+```
+
+```bash
+pip install "aegize[mcp]"     # requires Python 3.10+
+
+# See what the upstream server exposes (for writing the policy):
+aegize-mcp inspect -- npx -y some-mcp-server
+
+# Serve the host, guarding the upstream:
+aegize-mcp proxy \
+  --policy ./aegize.yaml \
+  --agent-id claude-code \
+  --owner you \
+  --environment development \
+  --audit-log ./aegize-mcp-audit.jsonl \
+  -- \
+  npx -y some-mcp-server
+```
+
+Everything after `--` is the upstream server's command. Policies use the
+normal Aegize model with MCP tool names and `operation: "call"`:
+
+```yaml
+agents:
+  claude-code:
+    allow:
+      - tool: searchDocs
+        operations: ["call"]
+    require_approval:
+      - tool: createSession
+        operations: ["call"]
+    deny:
+      - tool: deployProduction
+        operations: ["call"]
+```
+
+Guarantees carry over unchanged: **default deny**, **deny wins**, denied and
+approval-gated calls **never reach the upstream server**, and every attempt is
+audited (decision before forwarding, outcome after). Sensitive-looking argument
+values (passwords, tokens, keys…) are redacted from audit summaries — and for
+credential-bearing tool names (e.g. `setCredential`), every value is; a SHA-256
+argument hash keeps calls correlatable.
+
+Current scope, stated plainly: **local stdio servers only** (remote HTTP
+proxying is not yet supported), and `require_approval` is a **hard gate** — the
+call is refused and recorded; a durable approval workflow is future work
+([RFC 0004](./rfcs/0004-approval-workflow.md)). A worked end-to-end setup lives
+in [`examples/mcp/extentos/`](./examples/mcp/extentos/).
 
 ## Audit log
 

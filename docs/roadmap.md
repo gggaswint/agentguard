@@ -22,6 +22,8 @@ Shipped capabilities:
 - **Permission decisions** — `allow` / `deny` / `require_approval`.
 - **JSONL audit logs** — append-only, one record per attempt and outcome.
 - **`aegize policy test` CLI** — assert policy decisions from a YAML test file.
+- **`aegize-mcp` policy gateway** — guard any local stdio MCP server
+  (optional `aegize[mcp]` extra, Python 3.10+).
 - **Runnable examples**, a **pytest** suite, and **Ruff** linting.
 
 ## Launch foundation
@@ -63,7 +65,11 @@ Meet agents where they already are:
   "agent + action → decision" from a YAML test file and exits non-zero on drift;
   the first step of the policy-as-code lifecycle
   ([RFC 0008](../rfcs/0008-policy-as-code-lifecycle.md)).
-- **MCP adapter** — register guarded tools with MCP servers cleanly.
+- [x] **MCP policy gateway** — `aegize-mcp proxy` puts the runtime in front of
+  any local stdio MCP server: mirrored tools, per-call policy evaluation,
+  approval hard-gate, full audit; optional `aegize[mcp]` extra
+  ([RFC 0009](../rfcs/0009-mcp-policy-gateway.md)). Remote (HTTP) transports and
+  tool-list change notifications are future work.
 - First-class helpers for common agent frameworks via the `guard()` callable.
 - **CLI policy validator** — lint and validate policy files (`aegize` CLI).
 - Policy schema validation with helpful errors.

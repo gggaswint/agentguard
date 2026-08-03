@@ -1,0 +1,29 @@
+# Aegize MCP gateway configuration for guarding the Extentos MCP server.
+#
+# Run with:
+#     aegize-mcp proxy --config ./aegize-mcp.yaml
+#
+# Command-line flags override any value in this file.
+agent:
+  id: claude-code
+  name: Claude Code
+  owner: geoff            # replace with your name/handle
+  environment: development  # normalized to "dev" (dev | staging | prod)
+
+policy: ./policy.yaml
+audit_log: ./aegize-mcp-audit.jsonl
+
+upstream:
+  command: npx
+  args:
+    - -y
+    - "@extentos/mcp-server@latest"
+  # Environment variables the upstream server needs. Values are passed to the
+  # subprocess but are never written to logs or audit records by Aegize.
+  # env:
+  #   EXTENTOS_API_KEY: replace-me
+
+gateway:
+  tool_prefix: ""             # optional prefix for the exposed tool names
+  startup_timeout_seconds: 60 # first `npx -y` run downloads the package
+  call_timeout_seconds: 120

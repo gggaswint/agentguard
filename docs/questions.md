@@ -102,6 +102,27 @@ policy changes with review, staging, and rollback? Explored in
 
 ---
 
+## MCP gateway
+
+### How should the gateway track upstream tool-list changes?
+
+The MCP gateway ([RFC 0009](../rfcs/0009-mcp-policy-gateway.md)) snapshots the
+upstream tool list at startup; tools added later are denied as unknown until
+restart. MCP supports `tools/list_changed` notifications — should the gateway
+re-discover live (and re-emit the notification downstream), or is a
+restart-to-refresh model safer for a policy boundary? A changing tool surface
+is also a changing *policy* surface.
+
+### What risk level should an MCP tool call carry?
+
+MCP tools carry no risk metadata, so gateway actions default to `low`, which
+makes `risk_level_max` rules inert at this boundary. Should risk come from a
+config-side map (tool → risk), from tool annotations (e.g. MCP's
+`destructiveHint`), or stay out of the gateway until RFC 0007's effect
+classification lands?
+
+---
+
 ## Approval
 
 ### How should approval delegation work?

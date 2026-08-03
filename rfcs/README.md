@@ -18,6 +18,7 @@ record of *why* once it ships.
 | [0006](./0006-resource-scoped-permissions.md) | Resource-Scoped Permissions (Capability Model) | Draft |
 | [0007](./0007-mutating-action-safety.md) | Mutating-Action Safety | Draft |
 | [0008](./0008-policy-as-code-lifecycle.md) | Policy-as-Code Lifecycle | Draft |
+| [0009](./0009-mcp-policy-gateway.md) | MCP Policy Gateway (local stdio) | Implemented |
 
 ## What RFCs are for
 
