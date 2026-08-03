@@ -1,0 +1,103 @@
+# Aegize policy for the Extentos MCP server, keyed on MCP tool names.
+#
+# Tool names below were discovered from @extentos/mcp-server@0.11.43
+# (2026-08-03) via:
+#
+#     aegize-mcp inspect -- npx -y @extentos/mcp-server@latest
+#
+# Extentos may add or rename tools; re-run `inspect` and adjust. Anything not
+# listed is denied (default deny), so a stale policy fails closed — new tools
+# are blocked until you allow them. Every MCP tool call uses operation "call".
+#
+# The grouping is an opinionated starting point, not a recommendation from
+# Extentos: reads/discovery are allowed, mutating/project-changing tools wait
+# for a human, and credential writes are denied outright. Tighten or loosen to
+# taste.
+agents:
+  claude-code:
+    allow:
+      # Read-only discovery, docs, and status.
+      - tool: getPlatformInfo
+        operations: ["call"]
+      - tool: getCapabilityGuide
+        operations: ["call"]
+      - tool: getCodeExample
+        operations: ["call"]
+      - tool: getMigrationGuide
+        operations: ["call"]
+      - tool: searchDocs
+        operations: ["call"]
+      - tool: getPermissions
+        operations: ["call"]
+      - tool: inspectIntegration
+        operations: ["call"]
+      - tool: validateIntegration
+        operations: ["call"]
+      - tool: getEventLog
+        operations: ["call"]
+      - tool: getSimulatorStatus
+        operations: ["call"]
+      - tool: getDisplayState
+        operations: ["call"]
+      - tool: getProductionChecklist
+        operations: ["call"]
+      - tool: getCredentialGuide
+        operations: ["call"]
+      - tool: getVoiceCommandGuidance
+        operations: ["call"]
+      - tool: getConnectionPageConfig
+        operations: ["call"]
+      - tool: getAssistantConfig
+        operations: ["call"]
+      - tool: listProjectSounds
+        operations: ["call"]
+      - tool: getGatewayUsage
+        operations: ["call"]
+      - tool: getCredentialStatus
+        operations: ["call"]
+      - tool: getProjectAnalytics
+        operations: ["call"]
+
+    require_approval:
+      # Mutating / project-changing / simulator-driving tools: a human sees
+      # them first. The gateway is a hard gate — the call is recorded and
+      # refused; re-issue it yourself after review.
+      - tool: createSimulatorSession
+        operations: ["call"]
+      - tool: deleteSimulatorSession
+        operations: ["call"]
+      - tool: ensureSimulatorBrowser
+        operations: ["call"]
+      - tool: completeAuthLink
+        operations: ["call"]
+      - tool: generateConnectionModule
+        operations: ["call"]
+      - tool: setConnectionPageConfig
+        operations: ["call"]
+      - tool: regenerateConnectionPageFile
+        operations: ["call"]
+      - tool: adoptConnectionPageFile
+        operations: ["call"]
+      - tool: setAssistantConfig
+        operations: ["call"]
+      - tool: addProjectSound
+        operations: ["call"]
+      - tool: injectTranscript
+        operations: ["call"]
+      - tool: injectAssistantUtterance
+        operations: ["call"]
+      - tool: injectInput
+        operations: ["call"]
+      - tool: injectHardwareButton
+        operations: ["call"]
+      - tool: assertToolCalled
+        operations: ["call"]
+      - tool: setSimVideo
+        operations: ["call"]
+      - tool: setSimDevice
+        operations: ["call"]
+
+    deny:
+      # Credential writes never happen through the agent. Deny always wins.
+      - tool: setCredential
+        operations: ["call"]

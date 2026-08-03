@@ -310,3 +310,31 @@ Consequences:
 All branding, accounts, and copy are kept independent. Vendor names appear only
 as integration targets (e.g. "works across OpenAI, Anthropic, Google, and
 open-source models"), never as affiliations.
+
+---
+
+## Decision 015: MCP gateway is an optional deployment shape of the runtime
+
+Status: Accepted
+
+Date: 2026-08-03
+
+Decision:
+Ship an MCP policy gateway (`aegize-mcp`, local stdio only) as an **optional
+extra** (`pip install "aegize[mcp]"`, Python 3.10+) built on the official MCP
+Python SDK. The gateway reuses `PermissionPolicy` and `AuditLog` unchanged and
+enforces the same invariants (default deny, deny wins, gated/denied never
+execute, audit-first). See [RFC 0009](../rfcs/0009-mcp-policy-gateway.md).
+
+Rationale:
+"Protocols over proprietary APIs": MCP is where agents meet tools, and most MCP
+servers are third-party code that cannot be wrapped in-process. A protocol-level
+gateway extends the runtime's reach without changing its model. Making it an
+extra keeps the core dependency-light (Decision 011): the MCP SDK's dependency
+tree never touches `pip install aegize`.
+
+Consequences:
+The gateway is a deployment shape, not a second enforcement model — RFC 0005's
+in-process SDK remains the core. The core stays Python 3.9+/PyYAML-only; the
+gateway requires 3.10+. Remote transports, tool-list change propagation, and
+per-tool risk mapping are explicitly future work.

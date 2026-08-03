@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aegize"
-version = "0.3.0"
+version = "0.4.0"
 description = "Infrastructure for autonomous AI agents: identity, policy, permissions, approval workflows, and audit."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -39,9 +39,14 @@ dependencies = ["PyYAML>=6.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "ruff>=0.1"]
+# The MCP policy gateway. The official MCP SDK requires Python 3.10+; the
+# core package stays 3.9-compatible, so on older interpreters this extra
+# installs nothing and `aegize-mcp` explains what is missing.
+mcp = ["mcp>=2.0,<3; python_version >= '3.10'"]
 
 [project.scripts]
 aegize = "aegize.cli:main"
+aegize-mcp = "aegize.mcp.cli:main"
 
 [project.urls]
 Homepage = "https://aegize.com"

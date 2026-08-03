@@ -58,6 +58,7 @@ Run `python scripts/context_check.py` to confirm these docs are present.
 - `src/aegize/` — the Python SDK (the product). Core primitives:
   `AgentIdentity`, `ToolAction`, `PermissionPolicy`, `GuardedTool`,
   `GuardContext`, `AuditLog`, plus `@guarded_tool` / `guard()` and the exceptions.
+  `src/aegize/mcp/` — the optional MCP policy gateway (`aegize-mcp`, RFC 0009).
 - `tests/` — pytest suite. `examples/` — runnable examples.
 - `docs/` — source-of-truth documents (read these). `rfcs/` — the RFC process.
 - `web/` — the aegize.com site (Next.js 15, static export). Self-contained.
@@ -71,6 +72,13 @@ Python SDK (run from the repo root, using the project's virtualenv):
 python -m pytest        # full test suite — must pass
 ruff check .            # lint — must be clean
 ```
+
+MCP gateway (`src/aegize/mcp/`, optional `aegize[mcp]` extra): the official MCP
+SDK requires **Python 3.10+**, while the base package supports 3.9. The repo
+has two virtualenvs: `.venv` (3.9, base — `tests/mcp_gateway/` is auto-skipped)
+and `.venv312` (3.12, installed with `-e ".[mcp]"` — runs the full suite
+including the gateway integration tests). Run both before claiming green. Keep
+`aegize.mcp` imports out of the core package.
 
 Website (only when touching `web/`):
 

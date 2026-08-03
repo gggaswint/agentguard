@@ -135,6 +135,30 @@ v1.0 target (see [Future architecture](#future-architecture)). Today the
 integration point is the exception: callers route `ApprovalRequired` to whatever
 human process they already have.
 
+## MCP gateway (deployment shape)
+
+The SDK's enforcement point is in-process. The **MCP policy gateway**
+(`aegize-mcp`, optional `aegize[mcp]` extra, [RFC 0009](../rfcs/0009-mcp-policy-gateway.md))
+applies the same runtime at a process boundary: an MCP host connects to the
+gateway over stdio; the gateway launches the real upstream MCP server as a
+subprocess, mirrors its tools, and runs every `tools/call` through the same
+sequence — build `ToolAction` → evaluate `PermissionPolicy` → audit the
+decision → forward only if allowed → audit the outcome.
+
+```
+MCP Host ──stdio──► aegize-mcp proxy ──stdio──► Upstream MCP server
+                    (same policy, same audit
+                     schema, same invariants)
+```
+
+This is a *deployment shape* of the runtime, not a second enforcement model:
+policies are ordinary Aegize YAML (tool = MCP tool name, operation = `"call"`),
+audit records use the same JSONL schema (plus MCP metadata and a failure
+`category`), and default-deny / deny-wins / gated-never-executes hold
+unchanged. Scope today: local stdio servers only; the tool list is a startup
+snapshot; approval is a hard gate. The gateway trusts its operator the same way
+the SDK trusts its host process — it governs the calls that pass through it.
+
 ## Threat model / trust assumptions
 
 Aegize is honest about what it does and does not defend.
@@ -166,7 +190,8 @@ host.
 
 Direction, sequenced roughly by the [roadmap](./roadmap.md):
 
-- **MCP support** — clean registration of guarded tools with MCP servers.
+- **MCP support** — shipped as the stdio policy gateway (above); remote
+  transports and tool-list change propagation are future work.
 - **Signed agent identity** — verifiable provenance for `AgentIdentity`.
 - **Tamper-evident logs** — hash-chained / signed audit records.
 - **Remote policy service** — centralized, versioned policy distribution.
@@ -182,7 +207,8 @@ These are layers on top of the local-first core, never replacements for it.
 
 The places Aegize is designed to plug into other systems:
 
-- **Tool registries / MCP** — via the signature-preserving `guard()` callable.
+- **Tool registries / MCP** — via the signature-preserving `guard()` callable,
+  or protocol-level via the `aegize-mcp` stdio gateway.
 - **Agent frameworks** — wrap framework tools with `GuardedTool` / `@guarded_tool`.
 - **Approval systems** — by handling `ApprovalRequired` (chat, webhook, queue).
 - **Audit sinks** — by extending the audit writer (stdout, syslog, storage, SIEM).
