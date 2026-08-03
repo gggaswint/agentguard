@@ -27,6 +27,11 @@ def test_proxy_without_extra_fails_helpfully(capsys):
     err = capsys.readouterr().err
     assert 'aegize[mcp]' in err
     assert "3.10" in err
+    # The message must offer a path that works on ANY machine: the gateway is
+    # a separate process, so an isolated tool install sidesteps the project's
+    # own Python version entirely.
+    assert "uv tool install" in err
+    assert "pipx" in err
 
 
 def test_inspect_without_extra_fails_helpfully(capsys):

@@ -4,6 +4,32 @@ All notable changes to Aegize are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-08-03
+
+### Added
+
+- **Policy drift tooling** for the MCP gateway:
+  - `aegize-mcp check --policy <file> --agent-id <id> -- <server>` — compares
+    the policy against the live upstream tool list, reports the decision each
+    tool would get plus UNLISTED (default-denied) tools and stale rules, and
+    exits non-zero on drift, so it drops into CI.
+  - `aegize-mcp inspect --emit-policy [--agent-id --tool-prefix]` — prints a
+    full-coverage policy skeleton with every discovered tool under
+    `require_approval` (nothing runs silently, nothing is silently blocked).
+  - The gateway now warns on stderr at startup when discovered tools have no
+    policy rule for the agent (naming them), when policy rules reference tools
+    that no longer exist upstream, and when the agent id is absent from the
+    policy.
+
+### Changed
+
+- The `aegize-mcp` "extra not installed" error now explains the isolated
+  install path (`uv tool install --python 3.12 "aegize[mcp]"` / `pipx`) that
+  works regardless of the project's own Python version.
+- The upstream subprocess's stderr stream now falls back to the original
+  stderr (or devnull) when `sys.stderr` is not fd-backed, instead of failing
+  to spawn.
+
 ## [0.4.0] - 2026-08-03
 
 ### Added
@@ -76,6 +102,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Default-deny policy engine (`deny → require_approval → allow → default-deny`),
   `risk_level_max` ceilings, glob path allowlists, and append-only JSONL audit.
 
+[0.4.1]: https://github.com/gggaswint/aegize/releases/tag/v0.4.1
 [0.4.0]: https://github.com/gggaswint/aegize/releases/tag/v0.4.0
 [0.3.0]: https://github.com/gggaswint/aegize/releases/tag/v0.3.0
 [0.2.0]: https://github.com/gggaswint/aegize/releases/tag/v0.2.0

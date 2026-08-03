@@ -16,7 +16,9 @@ endorsement by Extentos.
 
 ## Prerequisites
 
-- Python 3.10+ with `pip install "aegize[mcp]"`
+- The gateway: `pip install "aegize[mcp]"` (Python 3.10+ environment), or on
+  any machine `uv tool install --python 3.12 "aegize[mcp]"` — the gateway is a
+  separate process, so your project's own Python version doesn't matter.
 - Node.js with `npx` (to run the Extentos server)
 
 ## 1. Discover the tools
@@ -44,6 +46,23 @@ stale policy fails closed. Rules of thumb:
   workflow yet.
 - `deny` — tools this agent must never call. Deny always wins.
 - Everything unlisted is denied (default deny), so start narrow.
+
+When Extentos ships new tools, updating the policy is one command each way:
+
+```bash
+# Regenerate a full-coverage skeleton (everything gated) and diff it:
+aegize-mcp inspect --emit-policy --agent-id claude-code \
+  -- npx -y @extentos/mcp-server@latest
+
+# Or check the current policy against the live tool list (exits non-zero on
+# drift — usable in CI):
+aegize-mcp check --policy ./policy.yaml --agent-id claude-code \
+  -- npx -y @extentos/mcp-server@latest
+```
+
+The gateway also warns on stderr at startup when discovered tools have no
+policy rule, so drift shows up in the host's MCP logs rather than as
+mysterious denials.
 
 ## 3. Run the gateway
 

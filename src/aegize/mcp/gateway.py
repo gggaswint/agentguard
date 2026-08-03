@@ -321,6 +321,32 @@ class MCPGateway:
         )
         return upstream_result
 
+    def _warn_about_drift(self, policy: PermissionPolicy, mapping: ToolMapping) -> None:
+        """Surface policy drift at startup (stderr), so silent default-denials
+        of newly-shipped upstream tools are diagnosable from the host's logs."""
+        from .coverage import assess_coverage
+
+        report = assess_coverage(policy, self.config.agent_id, mapping.exposed_names())
+        if not report.agent_known:
+            logger.warning(
+                "agent %r is not in the policy — every tool call will be "
+                "default-denied", self.config.agent_id,
+            )
+            return
+        if report.unlisted:
+            logger.warning(
+                "%d discovered tool(s) have no policy rule for agent %r and "
+                "will be default-denied: %s (run `aegize-mcp check` or "
+                "`aegize-mcp inspect --emit-policy` to update the policy)",
+                len(report.unlisted), self.config.agent_id,
+                ", ".join(report.unlisted),
+            )
+        if report.stale_rule_tools:
+            logger.warning(
+                "policy rule(s) reference tool(s) not present upstream: %s",
+                ", ".join(report.stale_rule_tools),
+            )
+
     # -- serving ----------------------------------------------------------
 
     def _build_server(self) -> Server:
@@ -363,6 +389,7 @@ class MCPGateway:
             mapping = ToolMapping(tools, tool_prefix=config.gateway.tool_prefix)
             logger.info("discovered %d upstream tool(s): %s",
                         len(tools), ", ".join(mapping.exposed_names()))
+            self._warn_about_drift(policy, mapping)
             self._bind(policy=policy, audit=audit, mapping=mapping, upstream=upstream)
 
             server = self._build_server()
