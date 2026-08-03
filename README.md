@@ -104,12 +104,18 @@ and confidence in deployment are the rest.
 pip install aegize
 ```
 
-With the MCP policy gateway (Python 3.10+; see
-[MCP gateway](#mcp-gateway-aegize-mcp)):
+With the MCP policy gateway (see [MCP gateway](#mcp-gateway-aegize-mcp)):
 
 ```bash
-pip install "aegize[mcp]"
+pip install "aegize[mcp]"                      # in a Python 3.10+ environment
+uv tool install --python 3.12 "aegize[mcp]"    # on any machine (isolated; uv
+                                               # fetches the interpreter itself)
 ```
+
+The gateway runs as a separate process, so your project's own Python version
+does not matter — only the gateway's interpreter needs to be 3.10+ (the MCP
+SDK's floor), and an isolated tool install (`uv tool install` / `pipx`)
+provides that anywhere.
 
 Or from source (for development):
 
@@ -381,6 +387,22 @@ audited (decision before forwarding, outcome after). Sensitive-looking argument
 values (passwords, tokens, keys…) are redacted from audit summaries — and for
 credential-bearing tool names (e.g. `setCredential`), every value is; a SHA-256
 argument hash keeps calls correlatable.
+
+**Keeping the policy current** as the upstream server evolves is a one-command
+story — default deny means new upstream tools are blocked until listed, and the
+tooling makes that visible instead of silent:
+
+```bash
+# Print a full-coverage policy skeleton (every tool gated behind approval):
+aegize-mcp inspect --emit-policy --agent-id claude-code -- npx -y some-mcp-server
+
+# Diff a policy against the live tool list; exits non-zero on drift (CI-able):
+aegize-mcp check --policy ./aegize.yaml --agent-id claude-code -- npx -y some-mcp-server
+```
+
+The gateway also logs uncovered tools to stderr at startup
+(`"N discovered tool(s) … will be default-denied: …"`), so drift is
+diagnosable straight from the host's MCP logs.
 
 Current scope, stated plainly: **local stdio servers only** (remote HTTP
 proxying is not yet supported), and `require_approval` is a **hard gate** — the

@@ -9,6 +9,8 @@ SDK's stdio transport when the context exits.
 
 from __future__ import annotations
 
+import os
+import sys
 from contextlib import AsyncExitStack
 from typing import Any
 
@@ -32,6 +34,23 @@ _ERROR_LIMIT = 200
 
 def _bounded(text: str, limit: int = _ERROR_LIMIT) -> str:
     return text if len(text) <= limit else text[: limit - 3] + "..."
+
+
+def _upstream_errlog():
+    """A real, fd-backed stream for the upstream subprocess's stderr.
+
+    ``sys.stderr`` may be replaced by an object without ``fileno()`` (pytest
+    capture, some embedders); subprocess spawning needs a real descriptor.
+    Fall back to the original stderr, then to ``os.devnull``.
+    """
+    for candidate in (sys.stderr, sys.__stderr__):
+        try:
+            if candidate is not None:
+                candidate.fileno()
+                return candidate
+        except Exception:  # noqa: BLE001 - any failure means "not usable"
+            continue
+    return open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115 - long-lived
 
 
 def classify_mcp_error(exc: MCPError, *, context: str) -> Exception:
@@ -71,7 +90,9 @@ class UpstreamClient:
         )
         self._stack = AsyncExitStack()
         try:
-            read, write = await self._stack.enter_async_context(stdio_client(params))
+            read, write = await self._stack.enter_async_context(
+                stdio_client(params, errlog=_upstream_errlog())
+            )
             session = await self._stack.enter_async_context(ClientSession(read, write))
             with anyio.fail_after(self._startup_timeout):
                 await session.initialize()

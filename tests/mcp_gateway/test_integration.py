@@ -51,12 +51,14 @@ POLICY_YAML = textwrap.dedent(
 
 
 @asynccontextmanager
-async def gateway_session(tmp_path, *, call_timeout: float = 30.0, extra_flags=()):
+async def gateway_session(
+    tmp_path, *, call_timeout: float = 30.0, extra_flags=(), policy_yaml: str = POLICY_YAML
+):
     """Connect to a real gateway subprocess; yield (session, paths)."""
     import sys
 
     policy = tmp_path / "policy.yaml"
-    policy.write_text(POLICY_YAML, encoding="utf-8")
+    policy.write_text(policy_yaml, encoding="utf-8")
     audit = tmp_path / "audit.jsonl"
     call_log = tmp_path / "calls.jsonl"
     stderr_log = tmp_path / "gateway-stderr.log"
@@ -209,6 +211,32 @@ async def test_upstream_subprocess_cleaned_up_on_shutdown(tmp_path):
         time.sleep(0.2)
     os.kill(pid, signal.SIGKILL)  # do not leak it beyond the test
     raise AssertionError(f"fixture upstream (pid {pid}) was not cleaned up")
+
+
+async def test_startup_warns_about_uncovered_tools(tmp_path):
+    partial_policy = textwrap.dedent(
+        """
+        agents:
+          test-agent:
+            allow:
+              - tool: echo
+                operations: ["call"]
+        """
+    )
+    async with gateway_session(tmp_path, policy_yaml=partial_policy) as (session, paths):
+        await session.call_tool("echo", {})
+    stderr = paths["stderr_log"].read_text(encoding="utf-8")
+    assert "default-denied" in stderr
+    # The uncovered tools are named, so drift is diagnosable from the host logs.
+    assert "send_email" in stderr and "slow_tool" in stderr
+    # Covered tools are not listed as drift.
+    assert "5 " in stderr  # 5 of the 6 fixture tools have no rule
+
+
+async def test_no_drift_warning_when_policy_covers_everything(tmp_path):
+    async with gateway_session(tmp_path) as (session, paths):
+        await session.call_tool("echo", {})
+    assert "default-denied" not in paths["stderr_log"].read_text(encoding="utf-8")
 
 
 async def test_tool_prefix_applied_end_to_end(tmp_path):
