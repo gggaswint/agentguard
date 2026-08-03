@@ -4,7 +4,7 @@ All notable changes to Aegize are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - Unreleased
+## [0.4.0] - 2026-08-03
 
 ### Added
 
@@ -76,7 +76,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Default-deny policy engine (`deny → require_approval → allow → default-deny`),
   `risk_level_max` ceilings, glob path allowlists, and append-only JSONL audit.
 
-[0.4.0]: https://github.com/gggaswint/aegize/compare/v0.3.0...HEAD
+[0.4.0]: https://github.com/gggaswint/aegize/releases/tag/v0.4.0
 [0.3.0]: https://github.com/gggaswint/aegize/releases/tag/v0.3.0
 [0.2.0]: https://github.com/gggaswint/aegize/releases/tag/v0.2.0
 [0.1.0]: https://github.com/gggaswint/aegize/releases/tag/v0.1.0
