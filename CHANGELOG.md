@@ -4,6 +4,17 @@ All notable changes to Aegize are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-08-04
+
+### Added
+
+- `aegize-mcp inspect --json` — print the upstream tool surface as
+  deterministic JSON (sorted by name, stable field order: name, title,
+  description, input/output schemas). Commit the snapshot and diff it in CI to
+  catch tool renames, removals, and schema changes — useful for MCP server
+  *authors* as a surface-regression test, with no Aegize policy required.
+  Mutually exclusive with `--emit-policy`.
+
 ## [0.4.1] - 2026-08-03
 
 ### Added
@@ -102,6 +113,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Default-deny policy engine (`deny → require_approval → allow → default-deny`),
   `risk_level_max` ceilings, glob path allowlists, and append-only JSONL audit.
 
+[0.4.2]: https://github.com/gggaswint/aegize/releases/tag/v0.4.2
 [0.4.1]: https://github.com/gggaswint/aegize/releases/tag/v0.4.1
 [0.4.0]: https://github.com/gggaswint/aegize/releases/tag/v0.4.0
 [0.3.0]: https://github.com/gggaswint/aegize/releases/tag/v0.3.0

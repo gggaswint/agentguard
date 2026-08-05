@@ -398,6 +398,10 @@ aegize-mcp inspect --emit-policy --agent-id claude-code -- npx -y some-mcp-serve
 
 # Diff a policy against the live tool list; exits non-zero on drift (CI-able):
 aegize-mcp check --policy ./aegize.yaml --agent-id claude-code -- npx -y some-mcp-server
+
+# Snapshot the tool surface as deterministic JSON — diff it in CI to catch
+# tool renames/removals/schema changes (useful even without any policy):
+aegize-mcp inspect --json -- npx -y some-mcp-server > tool-surface.json
 ```
 
 The gateway also logs uncovered tools to stderr at startup
