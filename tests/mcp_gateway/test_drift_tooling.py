@@ -54,6 +54,33 @@ def test_emit_policy_applies_tool_prefix(capsys):
     assert all(name.startswith("g_") for name in gated)
 
 
+# -- inspect --json --------------------------------------------------------
+
+
+def test_inspect_json_emits_deterministic_tool_surface(capsys):
+    import json
+
+    code = main(["inspect", "--json", *_upstream_argv()])
+    assert code == 0
+    first = capsys.readouterr().out
+    tools = json.loads(first)
+    assert [t["name"] for t in tools] == ALL_TOOLS  # sorted -> diffable
+    echo = next(t for t in tools if t["name"] == "echo")
+    assert echo["description"] == "Echo the arguments back"
+    assert echo["input_schema"]["type"] == "object"
+    structured = next(t for t in tools if t["name"] == "structured_tool")
+    assert structured["output_schema"]["required"] == ["answer"]
+    # Byte-for-byte stable across runs — the property CI diffing depends on.
+    assert main(["inspect", "--json", *_upstream_argv()]) == 0
+    assert capsys.readouterr().out == first
+
+
+def test_inspect_json_and_emit_policy_are_exclusive(capsys):
+    code = main(["inspect", "--json", "--emit-policy", *_upstream_argv()])
+    assert code == 2
+    assert "not allowed" in capsys.readouterr().err.lower()
+
+
 # -- check -----------------------------------------------------------------
 
 

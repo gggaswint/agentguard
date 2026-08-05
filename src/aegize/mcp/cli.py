@@ -148,11 +148,18 @@ def _build_parser() -> argparse.ArgumentParser:
         "inspect", help="launch the upstream server, list its tools, and exit"
     )
     inspect.add_argument("--startup-timeout", type=float, metavar="SECONDS", default=20.0)
-    inspect.add_argument(
+    inspect_mode = inspect.add_mutually_exclusive_group()
+    inspect_mode.add_argument(
         "--emit-policy",
         action="store_true",
         help="print a full-coverage policy skeleton (all tools under "
         "require_approval) instead of the human-readable report",
+    )
+    inspect_mode.add_argument(
+        "--json",
+        action="store_true",
+        help="print the tool surface as deterministic JSON (sorted, stable) — "
+        "snapshot it and diff in CI to catch tool renames/removals",
     )
     inspect.add_argument(
         "--agent-id", default="claude-code",
@@ -228,15 +235,37 @@ def _emit_policy_skeleton(agent_id: str, exposed_names: list[str]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _tool_surface_json(tools: list) -> str:
+    """The tool surface as deterministic JSON: sorted by name, stable field
+    order — so a committed snapshot diffs cleanly in CI when the upstream
+    server renames, removes, or reshapes a tool."""
+    surface = [
+        {
+            "name": tool.name,
+            "title": tool.title,
+            "description": tool.description,
+            "input_schema": tool.input_schema,
+            "output_schema": tool.output_schema,
+        }
+        for tool in sorted(tools, key=lambda t: t.name)
+    ]
+    return json.dumps(surface, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+
+
 async def _run_inspect(
     upstream_argv: list[str],
     startup_timeout: float,
     *,
     emit_policy: bool = False,
+    as_json: bool = False,
     agent_id: str = "claude-code",
     tool_prefix: str = "",
 ) -> None:
     tools = await _discover_tools(upstream_argv, startup_timeout)
+
+    if as_json:
+        print(_tool_surface_json(tools), end="")
+        return
 
     if emit_policy:
         names = [tool_prefix + tool.name for tool in tools]
@@ -298,7 +327,10 @@ def main(argv: list[str] | None = None) -> int:
     own_argv, upstream_argv = split_upstream_argv(argv)
 
     parser = _build_parser()
-    args = parser.parse_args(own_argv)
+    try:
+        args = parser.parse_args(own_argv)
+    except SystemExit as exc:  # argparse errors/help; keep main() returnable
+        return int(exc.code or 0)
 
     # Diagnostics must never touch stdout (the MCP protocol channel).
     logging.basicConfig(
@@ -356,6 +388,7 @@ def main(argv: list[str] | None = None) -> int:
                     upstream_argv,
                     args.startup_timeout,
                     emit_policy=args.emit_policy,
+                    as_json=args.json,
                     agent_id=args.agent_id,
                     tool_prefix=args.tool_prefix,
                 )

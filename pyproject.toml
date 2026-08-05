@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aegize"
-version = "0.4.1"
+version = "0.4.2"
 description = "Infrastructure for autonomous AI agents: identity, policy, permissions, approval workflows, and audit."
 readme = "README.md"
 requires-python = ">=3.9"
